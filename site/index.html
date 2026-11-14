@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How RealTimeX Runs on AI</title>
+<meta name="description" content="Not what AI could do. What our agents actually did this quarter, with the receipts. RealTimeX, Viet Nam–Bay Area Business Forum 2026.">
+<meta property="og:title" content="How RealTimeX runs on AI">
+<meta property="og:description" content="Real work, real records: agents do the work, people own the decisions.">
+<meta name="referrer" content="no-referrer">
+<style>
+:root{
+  --bg:#f6f5f1; --surface:#ffffff; --surface-2:#efede6; --ink:#16202c; --ink-2:#4a5562; --muted:#7a838d;
+  --line:#e0ddd3; --accent:#1f5fbf; --accent-ink:#ffffff; --accent-soft:#e3ecfa;
+  --good:#1e7a4c; --good-soft:#e2f2e9; --warn:#a35a00; --warn-soft:#fbefdc; --bad:#b3261e; --bad-soft:#fbe5e3;
+  --bar:#1f5fbf; --bar-dim:#b9cbe8; --radius:14px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f141a; --surface:#171e26; --surface-2:#1e2731; --ink:#eef1f4; --ink-2:#b7c0ca; --muted:#8a95a1;
+    --line:#2a3440; --accent:#6ea2f0; --accent-ink:#0b1320; --accent-soft:#1c2c44;
+    --good:#5fc48f; --good-soft:#163024; --warn:#e7a54b; --warn-soft:#33260f; --bad:#f08079; --bad-soft:#3a1a18;
+    --bar:#6ea2f0; --bar-dim:#2f4566; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --surface:#171e26; --surface-2:#1e2731; --ink:#eef1f4; --ink-2:#b7c0ca; --muted:#8a95a1;
+  --line:#2a3440; --accent:#6ea2f0; --accent-ink:#0b1320; --accent-soft:#1c2c44;
+  --good:#5fc48f; --good-soft:#163024; --warn:#e7a54b; --warn-soft:#33260f; --bad:#f08079; --bad-soft:#3a1a18;
+  --bar:#6ea2f0; --bar-dim:#2f4566; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html[data-lang="en"] [lang="vi"], html[data-lang="vi"] [lang="en"]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55;font-size:16px;-webkit-text-size-adjust:100%}
+a{color:var(--accent)}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+header.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:52px;gap:12px}
+.brand{font-weight:750;letter-spacing:-.3px;font-size:16px;color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand b{color:var(--accent)}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.lang button{font:inherit;font-size:13px;border:0;background:none;color:var(--ink-2);padding:6px 12px;cursor:pointer;min-height:32px}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:650}
+.hero{padding:40px 0 28px}
+.eyebrow{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);font-weight:650;margin:0 0 14px}
+h1{font-size:clamp(34px,8vw,54px);line-height:1.06;letter-spacing:-1.5px;margin:0 0 16px;font-weight:780}
+h1 span{color:var(--accent)}
+.lede{font-size:18px;color:var(--ink-2);margin:0 0 26px;max-width:620px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 22px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 14px 12px}
+.stat .n{font-size:clamp(26px,7vw,36px);font-weight:780;letter-spacing:-1px;line-height:1.05;font-variant-numeric:tabular-nums}
+.stat .l{font-size:13px;color:var(--ink-2);margin-top:6px;line-height:1.35}
+.cta{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:650;padding:13px 20px;border-radius:12px;font-size:16px}
+.cta:hover{filter:brightness(1.08)}
+.asof{font-size:12px;color:var(--muted);margin-top:12px}
+section{padding:26px 0;border-top:1px solid var(--line)}
+h2{font-size:clamp(24px,5.5vw,32px);letter-spacing:-.8px;line-height:1.15;margin:0 0 10px}
+h3{font-size:19px;letter-spacing:-.3px;margin:0;line-height:1.3}
+.sub{color:var(--ink-2);margin:0 0 18px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.split .col{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.split .col h4{margin:0 0 8px;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.split ul{margin:0;padding-left:18px}
+.split li{margin:4px 0}
+.col.people{border-color:var(--accent);background:var(--accent-soft)}
+.story{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin:0 0 12px;overflow:hidden}
+.story>summary{list-style:none;cursor:pointer;padding:16px 16px 14px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start}
+.story>summary::-webkit-details-marker{display:none}
+.story .num{font-size:12px;font-weight:700;color:var(--muted);padding-top:4px;font-variant-numeric:tabular-nums}
+.story .hook{color:var(--ink-2);font-size:15px;margin:4px 0 0}
+.story .chev{color:var(--muted);transition:transform .2s;padding-top:2px;font-size:18px}
+.story[open] .chev{transform:rotate(90deg)}
+.story .body{padding:0 16px 18px}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:999px;margin-top:8px}
+.tag.done{background:var(--good-soft);color:var(--good)}
+.tag.pending{background:var(--warn-soft);color:var(--warn)}
+.tl{list-style:none;margin:6px 0 14px;padding:0;border-left:2px solid var(--line)}
+.tl li{position:relative;padding:4px 0 8px 16px}
+.tl li:before{content:"";position:absolute;left:-6px;top:11px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--accent)}
+.tl time{display:block;font-size:12px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:6px 0 14px}
+.kv div{background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.kv b{display:block;font-size:22px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.kv span{font-size:13px;color:var(--ink-2);line-height:1.35;display:block}
+.note{border-radius:10px;padding:10px 12px;font-size:14px;margin:8px 0}
+.note.human{background:var(--accent-soft)}
+.note.wrong{background:var(--warn-soft)}
+.note b{display:block;font-size:12px;letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px}
+.note.human b{color:var(--accent)} .note.wrong b{color:var(--warn)}
+figure{margin:10px 0 14px}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:10px;background:#fff}
+figcaption{font-size:12px;color:var(--muted);margin-top:6px}
+.domains{display:grid;gap:6px;margin:8px 0 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px}
+.domains div{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:10px;overflow-wrap:anywhere}
+.domains .ok{background:var(--good-soft);color:var(--good)}
+.domains .no{background:var(--bad-soft);color:var(--bad)}
+.domains small{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:650;white-space:nowrap}
+/* chart */
+.chart{position:relative;margin:6px 0 4px}
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart .axis{fill:var(--muted);font-size:11px}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .val{fill:var(--ink);font-size:12px;font-weight:700}
+.chart rect.b{fill:var(--bar-dim)}
+.chart rect.b.hi{fill:var(--bar)}
+.chart g.m:hover path,.chart g.m:focus path{filter:brightness(1.15)}
+.chart g.m{outline:none;cursor:default}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;line-height:1.4;padding:7px 9px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-110%);opacity:0;transition:opacity .12s}
+.tip.on{opacity:1}
+details.table{font-size:13px;color:var(--ink-2);margin-bottom:12px}
+details.table summary{cursor:pointer;color:var(--accent)}
+details.table table{border-collapse:collapse;margin-top:8px;font-variant-numeric:tabular-nums}
+details.table td,details.table th{padding:3px 12px 3px 0;text-align:left;border-bottom:1px solid var(--line)}
+.wrongs{display:grid;gap:10px}
+.wrongs div{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:12px 14px}
+.wrongs b{display:block}
+.rules{counter-reset:r;list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.rules li{counter-increment:r;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 48px;position:relative}
+.rules li:before{content:counter(r);position:absolute;left:14px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:12px;font-weight:700;display:grid;place-content:center}
+.final{text-align:left;padding:34px 0 40px}
+.final .cta{font-size:17px;padding:15px 22px}
+footer{border-top:1px solid var(--line);padding:22px 0 40px;font-size:12px;color:var(--muted)}
+footer p{margin:0 0 8px}
+@media (max-width:560px){
+  .stats{grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .stat{padding:11px 10px}
+  .stat .l{font-size:12px}
+  .split{grid-template-columns:1fr}
+  .lede{font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="#top">RealTime<b>X</b></a>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-set-lang="en" aria-pressed="true">EN</button>
+    <button type="button" data-set-lang="vi" aria-pressed="false">VI</button>
+  </div>
+</div></header>
+
+<main class="wrap" id="top">
+<div class="hero">
+  <p class="eyebrow"><span lang="en">Viet Nam–Bay Area Business Forum 2026 · Trung Le</span><span lang="vi">Diễn đàn Doanh nghiệp Việt Nam–Vùng Vịnh 2026 · Lê Trung</span></p>
+  <h1><span lang="en">We don't talk about AI.<br><span>We run on it.</span></span><span lang="vi">Chúng tôi không bàn về AI.<br><span>Chúng tôi vận hành bằng AI.</span></span></h1>
+  <p class="lede"><span lang="en">Not what AI could do someday. What our agents actually did in the last few weeks, building our product, serving clients in Vietnam and setting up our U.S. company, with the records to prove it.</span><span lang="vi">Không phải AI một ngày nào đó có thể làm gì, mà là những việc các agent của chúng tôi đã thực sự làm trong vài tuần qua: phát triển sản phẩm, phục vụ khách hàng tại Việt Nam và thành lập công ty tại Mỹ. Có số liệu và hồ sơ kèm theo.</span></p>
+  <div class="stats">
+    <div class="stat"><div class="n">71%</div><div class="l"><span lang="en">of product code changes co-written by AI, last 90 days</span><span lang="vi">thay đổi mã nguồn có AI cùng viết, 90 ngày qua</span></div></div>
+    <div class="stat"><div class="n">1h44m</div><div class="l"><span lang="en">from go-live to an AI salesperson's first real order</span><span lang="vi">từ lúc chạy thật đến đơn hàng đầu tiên do AI tạo</span></div></div>
+    <div class="stat"><div class="n">13 <small style="font-size:.5em" lang="en">days</small><small style="font-size:.5em" lang="vi">ngày</small></div><div class="l"><span lang="en">from a team of agents to a Delaware corporation</span><span lang="vi">từ đội agent đến công ty Delaware</span></div></div>
+  </div>
+  <a class="cta" href="https://cal.com/trung-realtimex/30min" target="_blank" rel="noopener"><span lang="en">Book 30 minutes with Trung</span><span lang="vi">Đặt lịch 30 phút với anh Trung</span> →</a>
+  <p class="asof"><span lang="en">Numbers as of November 14, 2026, from our own records. Client names withheld.</span><span lang="vi">Số liệu tính đến 14/11/2026, lấy từ hồ sơ nội bộ. Không nêu tên khách hàng.</span></p>
+</div>
+
+<section>
+  <h2><span lang="en">Agents do the work. People own the decisions.</span><span lang="vi">Agent làm việc. Con người quyết định.</span></h2>
+  <p class="sub"><span lang="en">Every story below follows the same split.</span><span lang="vi">Mọi câu chuyện bên dưới đều theo cùng một cách phân vai.</span></p>
+  <div class="split">
+    <div class="col"><h4><span lang="en">Agents</span><span lang="vi">Agent</span></h4>
+      <ul lang="en"><li>Research, draft, write code</li><li>Fill in forms, check documents</li><li>Answer customers in seconds, day and night</li><li>Review each other's work</li><li>Follow up without being reminded</li></ul>
+      <ul lang="vi"><li>Nghiên cứu, soạn thảo, viết code</li><li>Điền biểu mẫu, rà soát giấy tờ</li><li>Trả lời khách trong vài giây, cả ngày lẫn đêm</li><li>Kiểm tra chéo công việc của nhau</li><li>Tự theo dõi và nhắc việc</li></ul>
+    </div>
+    <div class="col people"><h4><span lang="en">People</span><span lang="vi">Con người</span></h4>
+      <ul lang="en"><li>Sign and pay</li><li>Set prices and approve contracts</li><li>Approve every code merge</li><li>Handle upset customers</li><li>Make the final call</li></ul>
+      <ul lang="vi"><li>Ký và thanh toán</li><li>Định giá, duyệt hợp đồng</li><li>Duyệt mọi lần đưa code vào sản phẩm</li><li>Xử lý khách hàng không hài lòng</li><li>Ra quyết định cuối cùng</li></ul>
+    </div>
+  </div>
+</section>
+
+<section id="stories">
+  <h2><span lang="en">Seven stories, with the records</span><span lang="vi">Bảy câu chuyện, có hồ sơ</span></h2>
+  <p class="sub"><span lang="en">Tap a story to open it.</span><span lang="vi">Chạm vào từng câu chuyện để xem chi tiết.</span></p>
+
+  <!-- 1 builds itself -->
+  <details class="story" open>
+    <summary><span class="num">01</span><div><h3><span lang="en">RealTimeX builds itself</span><span lang="vi">RealTimeX tự xây dựng chính mình</span></h3><p class="hook"><span lang="en">Three core engineers, 1,019 approved changes in 90 days.</span><span lang="vi">Ba kỹ sư chính, 1.019 thay đổi được duyệt trong 90 ngày.</span></p></div><span class="chev" aria-hidden="true">›</span></summary>
+    <div class="body">
+      <p><span lang="en">Share of commits to our main product that list an AI co-author, by month:</span><span lang="vi">Tỷ lệ commit vào sản phẩm chính có AI đồng tác giả, theo tháng:</span></p>
+      <div class="chart" id="chart"><div class="tip" id="tip" role="status" aria-live="polite"></div></div>
+      <p class="asof" style="margin:0 0 6px"><span lang="en">Bright bars: October and November 1–14. Tap a bar for counts.</span><span lang="vi">Cột đậm: tháng 10 và 1–14/11. Chạm vào cột để xem số liệu.</span></p>
+      <details class="table"><summary><span lang="en">Show as table</span><span lang="vi">Xem dạng bảng</span></summary><table id="chart-table"></table></details>
+      <div class="kv">
+        <div><b><span lang="en">6,327</span><span lang="vi">6.327</span></b><span lang="en">commits in 90 days</span><span lang="vi">commit trong 90 ngày</span></div>
+        <div><b><span lang="en">1,019</span><span lang="vi">1.019</span></b><span lang="en">merge requests, each approved by a named engineer</span><span lang="vi">yêu cầu hợp nhất, mỗi yêu cầu do một kỹ sư có tên duyệt</span></div>
+        <div><b>~36h</b><span lang="en">for one feature: first line of code to merged, 52 of 52 commits AI co-written</span><span lang="vi">cho một tính năng: từ dòng code đầu tiên đến khi hợp nhất, 52/52 commit có AI cùng viết</span></div>
+      </div>
+      <p><span lang="en">Agents plan, write, test and open the change. A person reviews and merges. RealTimeX also checks itself: a monitor compares what the system says it does with what actually happened.</span><span lang="vi">Agent lập kế hoạch, viết code, kiểm thử và gửi thay đổi. Con người rà soát và hợp nhất. RealTimeX còn tự kiểm tra chính mình: một hệ thống giám sát so sánh những gì hệ thống tuyên bố với những gì thực sự diễn ra.</span></p>
+      <div class="note human"><b><span lang="en">Where a person decided</span><span lang="vi">Con người quyết định ở đâu</span></b><span lang="en">All 1,019 merges were approved by one of our engineers.</span><span lang="vi">Cả 1.019 lần hợp nhất đều do kỹ sư của chúng tôi duyệt.</span></div>
+      <p class="asof"><span lang="en">How we counted: git history, non-merge commits on all branches whose message lists an AI co-author. The tag shows AI took part, not how much it wrote. Earlier AI use often left no tag.</span><span lang="vi">Cách đếm: lịch sử git, commit không phải merge trên mọi nhánh có ghi AI đồng tác giả. Nhãn này cho biết AI có tham gia, không cho biết AI viết bao nhiêu. Việc dùng AI trước đây thường không được gắn nhãn.</span></p>
+    </div>
+  </details>
+
+  <!-- 2 Santony -->
+  <details class="story">
+    <summary><span class="num">02</span><div><h3><span lang="en">An AI salesperson's first evening</span><span lang="vi">Buổi tối đầu tiên của nhân viên bán hàng AI</span></h3><p class="hook"><span lang="en">A lingerie brand in Vietnam: live at 5:27 PM, first real order at 7:11 PM.</span><span lang="vi">Một thương hiệu đồ lót tại Việt Nam: chạy thật lúc 17:27, đơn hàng thật đầu tiên lúc 19:11.</span></p></div><span class="chev" aria-hidden="true">›</span></summary>
+    <div class="body">
+      <p><span lang="en">The AI salesperson answers the brand's Facebook page, quotes live prices and stock from the shop's sales system, and creates orders. Anything it doesn't know goes to staff.</span><span lang="vi">Nhân viên bán hàng AI trả lời fanpage của thương hiệu, báo giá và tồn kho trực tiếp từ hệ thống bán hàng, và tự lên đơn. Câu hỏi nào chưa biết thì chuyển cho nhân viên.</span></p>
+      <ol class="tl">
+        <li><time>17:26</time><span lang="en">Our sales director approves go-live</span><span lang="vi">Giám đốc kinh doanh duyệt cho chạy thật</span></li>
+        <li><time>17:27</time><span lang="en">Real customers start chatting with the AI</span><span lang="vi">Khách thật bắt đầu chat với AI</span></li>
+        <li><time>18:06–18:24</time><span lang="en">3 questions it couldn't answer go to staff, and the answers are added to its knowledge</span><span lang="vi">3 câu hỏi AI chưa trả lời được chuyển cho nhân viên, câu trả lời được nạp vào kiến thức</span></li>
+        <li><time>19:11</time><span lang="en">First order created by the AI in the shop's sales system</span><span lang="vi">Đơn đầu tiên do AI tạo trong hệ thống bán hàng</span></li>
+        <li><time><span lang="en">Next day</span><span lang="vi">Hôm sau</span></time><span lang="en">The brand's team marks the AI as passing on all 11 of their criteria</span><span lang="vi">Đội ngũ thương hiệu chấm AI đạt cả 11 tiêu chí</span></li>
+      </ol>
+      <div class="kv">
+        <div><b>63 s</b><span lang="en">median first reply</span><span lang="vi">thời gian trả lời đầu (trung vị)</span></div>
+        <div><b>0</b><span lang="en">customers left waiting over 5 minutes</span><span lang="vi">khách phải chờ quá 5 phút</span></div>
+        <div><b>5–9 min</b><span lang="en">to apply each fix the brand asked for</span><span lang="vi">để sửa mỗi góp ý của thương hiệu</span></div>
+      </div>
+      <div class="note wrong"><b><span lang="en">What went wrong</span><span lang="vi">Điều chưa ổn</span></b><span lang="en">Our own day-one score was 7 of 12. It used slang abbreviations, asked twice for a phone number, and an old rule overrode a new one. Each was fixed and tracked.</span><span lang="vi">Ngày đầu chúng tôi tự chấm đạt 7/12: dùng từ viết tắt, xin số điện thoại hai lần, quy tắc cũ lấn quy tắc mới. Mỗi lỗi đều được sửa và theo dõi.</span></div>
+      <p class="asof"><span lang="en">Vietnam time, November 12–13, 2026. The 11/11 rating is the brand's evaluation during refinement week, not final acceptance.</span><span lang="vi">Giờ Việt Nam, 12–13/11/2026. Kết quả 11/11 là đánh giá của thương hiệu trong tuần tinh chỉnh, chưa phải nghiệm thu cuối cùng.</span></p>
+    </div>
+  </details>
+
+  <!-- 3 Ehrlich -->
+  <details class="story">
+    <summary><span class="num">03</span><div><h3><span lang="en">Every chat answered, all night</span><span lang="vi">Trả lời mọi tin nhắn, kể cả lúc nửa đêm</span></h3><p class="hook"><span lang="en">A kitchen and bath brand: 8 ad pages, about 100 conversations a day, replies in under a minute.</span><span lang="vi">Một thương hiệu thiết bị bếp và phòng tắm: 8 trang quảng cáo, khoảng 100 cuộc chat mỗi ngày, trả lời dưới một phút.</span></p></div><span class="chev" aria-hidden="true">›</span></summary>
+    <div class="body">
+      <p><span lang="en">The AI consultant follows the brand's own 8-step sales script, sends product photos, asks for a phone number and hands warm leads to the sales team. Staff can pause it on any chat with one tag.</span><span lang="vi">Chuyên viên tư vấn AI làm theo kịch bản tư vấn 8 bước của thương hiệu, gửi ảnh sản phẩm, xin số điện thoại và chuyển khách tiềm năng cho đội bán hàng. Nhân viên có thể tạm dừng AI ở bất kỳ cuộc chat nào chỉ bằng một thẻ.</span></p>
+      <div class="kv">
+        <div><b>105</b><span lang="en">conversations in one day (Nov 10), 93 of them new</span><span lang="vi">cuộc chat trong một ngày (10/11), 93 khách mới</span></div>
+        <div><b>&lt;1 min</b><span lang="en">median first reply in every time slot, overnight included</span><span lang="vi">trung vị trả lời đầu ở mọi khung giờ, kể cả ban đêm</span></div>
+        <div><b>30</b><span lang="en">phone numbers collected in 108 conversations (Nov 13–14)</span><span lang="vi">số điện thoại thu được từ 108 cuộc chat (13–14/11)</span></div>
+      </div>
+      <div class="note wrong"><b><span lang="en">What went wrong</span><span lang="vi">Điều chưa ổn</span></b><span lang="en">Twice the AI stopped replying: once when it hit a usage limit overnight, once when the host machine ran out of capacity. Our agents told the client and asked staff to cover until it was fixed.</span><span lang="vi">Hai lần AI ngừng trả lời: một lần do chạm giới hạn sử dụng ban đêm, một lần do máy chủ hết dung lượng phiên. Agent của chúng tôi báo khách hàng và đề nghị nhân viên trực thay cho đến khi khắc phục xong.</span></div>
+    </div>
+  </details>
+
+  <!-- 4 LCUK -->
+  <details class="story">
+    <summary><span class="num">04</span><div><h3><span lang="en">When two staff quit in one week</span><span lang="vi">Khi hai nhân viên nghỉ việc trong một tuần</span></h3><p class="hook"><span lang="en">A skincare distributor kept its customers because agents rebuilt its records in days.</span><span lang="vi">Một nhà phân phối mỹ phẩm giữ được khách hàng nhờ agent dựng lại dữ liệu trong vài ngày.</span></p></div><span class="chev" aria-hidden="true">›</span></summary>
+    <div class="body">
+      <div class="kv">
+        <div><b><span lang="en">1,928</span><span lang="vi">1.928</span></b><span lang="en">files gathered from scattered folders and chats</span><span lang="vi">tệp được thu thập từ nhiều thư mục và nhóm chat</span></div>
+        <div><b><span lang="en">1,014</span><span lang="vi">1.014</span></b><span lang="en">customers moved into a CRM and handed to the remaining salesperson</span><span lang="vi">khách hàng được đưa vào CRM và bàn giao cho nhân viên bán hàng còn lại</span></div>
+      </div>
+      <p><span lang="en">Today the agents log care conversations and orders, and build each day's customer-care list. Customer-facing messages are not switched on yet: the client hasn't chosen the account to send from, and our agents don't guess.</span><span lang="vi">Hiện agent ghi nhận các cuộc chăm sóc khách và đơn hàng, và lập danh sách chăm sóc mỗi ngày. Phần nhắn tin trực tiếp cho khách chưa bật: khách hàng chưa chọn tài khoản gửi, và agent không tự quyết thay.</span></p>
+    </div>
+  </details>
+
+  <!-- 5 company -->
+  <details class="story">
+    <summary><span class="num">05</span><div><h3><span lang="en">A U.S. company in 13 days</span><span lang="vi">Thành lập công ty tại Mỹ trong 13 ngày</span></h3><p class="hook"><span lang="en">Four agents researched, debated and filed. The agent stopped at the signature.</span><span lang="vi">Bốn agent nghiên cứu, tranh luận và nộp hồ sơ. Đến bước ký, agent dừng lại.</span></p></div><span class="chev" aria-hidden="true">›</span></summary>
+    <div class="body">
+      <p><span lang="en">A team of four agents, each in its own role: an operations lead, a legal and tax researcher, a brand and IP researcher, and an independent reviewer. Nothing counts as done until the reviewer passes it.</span><span lang="vi">Một đội bốn agent, mỗi agent một vai: điều phối vận hành, nghiên cứu pháp lý và thuế, nghiên cứu thương hiệu và sở hữu trí tuệ, và một người kiểm tra độc lập. Không việc gì được coi là xong nếu chưa qua kiểm tra.</span></p>
+      <ol class="tl">
+        <li><time><span lang="en">Oct 27</span><span lang="vi">27/10</span></time><span lang="en">Team starts: entity research, name and trademark checks</span><span lang="vi">Đội bắt đầu: nghiên cứu pháp nhân, kiểm tra tên và nhãn hiệu</span></li>
+        <li><time><span lang="en">Oct 31</span><span lang="vi">31/10</span></time><span lang="en">Formation services compared</span><span lang="vi">So sánh các dịch vụ thành lập công ty</span></li>
+        <li><time><span lang="en">Nov 3</span><span lang="vi">3/11</span></time><span lang="en">Two agents formally debate the company name, two rounds, with the reviewer as referee</span><span lang="vi">Hai agent tranh luận chính thức về tên công ty, hai vòng, có người kiểm tra làm trọng tài</span></li>
+        <li><time><span lang="en">Nov 8</span><span lang="vi">8/11</span></time><span lang="en">Delaware name search turns up an old 2016 "REALTIMEX INC." A $10 status record shows it was dissolved. The name is ours to use.</span><span lang="vi">Tra cứu tên ở Delaware phát hiện một "REALTIMEX INC." từ 2016. Bản tra cứu tình trạng giá 10 USD cho thấy công ty đó đã giải thể. Tên có thể sử dụng.</span></li>
+        <li><time><span lang="en">Nov 8</span><span lang="vi">8/11</span></time><span lang="en">The agent fills in the application, then <b>stops at the signing step</b>: the standard documents fail its own checklist. A second agent reviews them and lays out options. Trung chooses, signs and pays.</span><span lang="vi">Agent điền hồ sơ, rồi <b>dừng lại ở bước ký</b> vì giấy tờ mẫu không qua được danh sách kiểm tra của chính nó. Một agent khác rà soát và đưa ra các phương án. Anh Trung chọn, ký và thanh toán.</span></li>
+        <li><time><span lang="en">Nov 9</span><span lang="vi">9/11</span></time><span lang="en">RealTimeX, Inc. is incorporated in Delaware</span><span lang="vi">RealTimeX, Inc. được thành lập tại Delaware</span></li>
+      </ol>
+      <figure><img src="img/de-2016-dissolved.webp" alt="Delaware entity record: REALTIMEX INC., incorporated 2016, status Dissolved" loading="lazy" width="900" height="370"><figcaption><span lang="en">The public Delaware record the agent found: the 2016 company was dissolved.</span><span lang="vi">Hồ sơ công khai tại Delaware mà agent tìm được: công ty năm 2016 đã giải thể.</span></figcaption></figure>
+      <figure><img src="img/de-name-available.webp" alt="Delaware name availability: RealTimeX INC. is available" loading="lazy" width="900" height="213"><figcaption><span lang="en">Name check run by the agent; Trung solved the CAPTCHA.</span><span lang="vi">Agent tra cứu tên; anh Trung giải CAPTCHA.</span></figcaption></figure>
+      <div class="kv">
+        <div><b>18</b><span lang="en">research memos</span><span lang="vi">bản nghiên cứu</span></div>
+        <div><b>117</b><span lang="en">independent review reports</span><span lang="vi">báo cáo kiểm tra độc lập</span></div>
+        <div><b>26</b><span lang="en">questions sent to Trung, answered from desktop or phone</span><span lang="vi">câu hỏi gửi anh Trung, trả lời trên máy tính hoặc điện thoại</span></div>
+      </div>
+      <div class="note human"><b><span lang="en">Where a person decided</span><span lang="vi">Con người quyết định ở đâu</span></b><span lang="en">The route, the name, the signing option, every CAPTCHA, the signature and the payment.</span><span lang="vi">Cách thành lập, tên công ty, phương án ký, mọi CAPTCHA, chữ ký và thanh toán.</span></div>
+      <div class="note wrong"><b><span lang="en">What went wrong</span><span lang="vi">Điều chưa ổn</span></b><span lang="en">An agent typed the company ending into the wrong field of the Delaware form, and the correction from another agent was also wrong. Trung spotted it in a screenshot and the search was re-run. Review works both ways.</span><span lang="vi">Một agent nhập phần đuôi tên công ty vào sai ô trên biểu mẫu Delaware, và bản sửa của agent khác cũng sai. Anh Trung phát hiện qua ảnh chụp màn hình và tra cứu lại. Kiểm tra là hai chiều.</span></div>
+      <p class="asof"><span lang="en">Agents do research, not legal advice. We work with counsel where it matters.</span><span lang="vi">Agent làm nghiên cứu, không phải tư vấn pháp lý. Chúng tôi làm việc với luật sư ở những việc cần thiết.</span></p>
+    </div>
+  </details>
+
+  <!-- 6 trademark & scam -->
+  <details class="story">
+    <summary><span class="num">06</span><div><h3><span lang="en">Trademark filed, scammers reported the same afternoon</span><span lang="vi">Nộp đơn nhãn hiệu, tố giác lừa đảo ngay trong buổi chiều</span></h3><p class="hook"><span lang="en">The day after we filed, two fake "USPTO" emails arrived. The agents had predicted them.</span><span lang="vi">Ngay hôm sau khi nộp đơn, hai email giả mạo "USPTO" xuất hiện. Agent đã dự báo trước.</span></p></div><span class="chev" aria-hidden="true">›</span></summary>
+    <div class="body">
+      <ol class="tl">
+        <li><time><span lang="en">Nov 10</span><span lang="vi">10/11</span></time><span lang="en">Agents search U.S. records, prepare the application and pass independent review the same day</span><span lang="vi">Agent tra cứu dữ liệu Mỹ, chuẩn bị đơn và qua kiểm tra độc lập trong ngày</span></li>
+        <li><time><span lang="en">Nov 11, 7:16 PM ET</span><span lang="vi">11/11, 7:16 tối (giờ miền Đông)</span></time><span lang="en">Trung signs and pays; the application is filed. The agents' follow-up plan warns: expect scam solicitations.</span><span lang="vi">Anh Trung ký và thanh toán, đơn được nộp. Kế hoạch theo dõi của agent cảnh báo: sẽ có thư mời chào lừa đảo.</span></li>
+        <li><time><span lang="en">Nov 12, 8:53 &amp; 9:12 AM</span><span lang="vi">12/11, 8:53 &amp; 9:12 sáng</span></time><span lang="en">Two emails "from the USPTO" ask us to call a named "attorney" for a "verification appointment"</span><span lang="vi">Hai email "từ USPTO" yêu cầu gọi cho một "luật sư" có tên để "hẹn xác minh"</span></li>
+        <li><time><span lang="en">~3:00 PM</span><span lang="vi">~15:00</span></time><span lang="en">The agent reads the headers: neither came from uspto.gov. Advice: don't call, reply or pay.</span><span lang="vi">Agent đọc thông tin gửi thư: không email nào đến từ uspto.gov. Khuyến nghị: không gọi, không trả lời, không thanh toán.</span></li>
+        <li><time><span lang="en">3:11 PM</span><span lang="vi">15:11</span></time><span lang="en">Report sent to the USPTO's scam desk</span><span lang="vi">Gửi báo cáo cho bộ phận chống lừa đảo của USPTO</span></li>
+        <li><time><span lang="en">3:47 PM</span><span lang="vi">15:47</span></time><span lang="en">The agent files a report with the FTC</span><span lang="vi">Agent nộp báo cáo lên FTC</span></li>
+      </ol>
+      <div class="domains" aria-label="Sender domains">
+        <div class="ok"><span>uspto.gov</span><small lang="en">✓ real</small><small lang="vi">✓ thật</small></div>
+        <div class="no"><span>usptrademarkfiling.com</span><small lang="en">✗ fake</small><small lang="vi">✗ giả</small></div>
+        <div class="no"><span>uspto-patentoffice112.com</span><small lang="en">✗ fake</small><small lang="vi">✗ giả</small></div>
+      </div>
+      <figure><img src="img/ftc-report.webp" alt="FTC ReportFraud confirmation: report submitted" loading="lazy" width="900" height="210"><figcaption><span lang="en">FTC confirmation, filed by the agent at Trung's request.</span><span lang="vi">Xác nhận của FTC, do agent nộp theo yêu cầu của anh Trung.</span></figcaption></figure>
+      <div class="note human"><b><span lang="en">Tip for every new trademark owner</span><span lang="vi">Lưu ý cho mọi chủ nhãn hiệu mới</span></b><span lang="en">The USPTO doesn't book phone "verification appointments", and official email comes from uspto.gov. An examiner isn't assigned for months.</span><span lang="vi">USPTO không hẹn "xác minh" qua điện thoại, và email chính thức luôn đến từ uspto.gov. Phải vài tháng sau mới có thẩm định viên phụ trách hồ sơ.</span></div>
+    </div>
+  </details>
+
+  <!-- 7 mac check -->
+  <details class="story">
+    <summary><span class="num">07</span><div><h3><span lang="en">The agent built a tool to close a deal</span><span lang="vi">Agent tự viết công cụ để chốt giao dịch</span></h3><p class="hook"><span lang="en">Buying used Macs for our team, a seller couldn't prove the specs. So the agent built a free checker in one evening.</span><span lang="vi">Khi mua máy Mac cũ cho đội ngũ, người bán không chứng minh được cấu hình. Agent viết một công cụ kiểm tra miễn phí trong một buổi tối.</span></p></div><span class="chev" aria-hidden="true">›</span></summary>
+    <div class="body">
+      <p><span lang="en">The agent searched listings, ruled out unsuitable ones with written reasons, negotiated and followed up every morning. When a seller couldn't easily show what was inside his Mac, it built and published <a href="https://therealtimex.github.io/mac-check/" target="_blank" rel="noopener">Mac Check</a>. He ran it, and the deal closed the next day at $1,150 against $1,350 asked.</span><span lang="vi">Agent tìm tin rao, loại các máy không phù hợp kèm lý do, thương lượng và theo dõi mỗi sáng. Khi người bán khó chứng minh cấu hình máy, agent viết và công bố <a href="https://therealtimex.github.io/mac-check/" target="_blank" rel="noopener">Mac Check</a>. Người bán chạy thử, và giao dịch chốt ngay hôm sau với giá 1.150 USD so với 1.350 USD rao bán.</span></p>
+      <div class="note human"><b><span lang="en">Where a person decided</span><span lang="vi">Con người quyết định ở đâu</span></b><span lang="en">Trung approved every offer, met the seller and paid.</span><span lang="vi">Anh Trung duyệt mọi lời đề nghị giá, gặp người bán và thanh toán.</span></div>
+      <div class="note wrong"><b><span lang="en">What went wrong</span><span lang="vi">Điều chưa ổn</span></b><span lang="en">We lost an earlier auction because the agent's scheduled check-in missed the closing time.</span><span lang="vi">Chúng tôi lỡ một phiên đấu giá trước đó vì lịch kiểm tra của agent bị trễ giờ đóng phiên.</span></div>
+    </div>
+  </details>
+</section>
+
+<section>
+  <h2><span lang="en">What went wrong, and why we show it</span><span lang="vi">Những điều chưa ổn, và vì sao chúng tôi công khai</span></h2>
+  <p class="sub"><span lang="en">Agents make mistakes. The question is whether the system catches them.</span><span lang="vi">Agent cũng mắc lỗi. Câu hỏi là hệ thống có phát hiện được hay không.</span></p>
+  <div class="wrongs">
+    <div><b><span lang="en">Outages</span><span lang="vi">Gián đoạn</span></b><span lang="en">An AI consultant stopped replying twice. The client was told within hours and staff covered.</span><span lang="vi">Chuyên viên tư vấn AI hai lần ngừng trả lời. Khách hàng được thông báo trong vài giờ và nhân viên trực thay.</span></div>
+    <div><b><span lang="en">A late quote</span><span lang="vi">Một báo giá trễ hạn</span></b><span lang="en">A tour quote missed its deadline. We admitted it to the client the same day.</span><span lang="vi">Một báo giá tour bị trễ hạn. Chúng tôi nhận lỗi với khách hàng ngay trong ngày.</span></div>
+    <div><b><span lang="en">Mistakes caught both ways</span><span lang="vi">Lỗi được phát hiện từ cả hai phía</span></b><span lang="en">Agents caught wrong wording in our own trademark application, twice. Trung caught an agent's error on a state form.</span><span lang="vi">Agent hai lần phát hiện câu chữ sai trong đơn nhãn hiệu của chính chúng tôi. Anh Trung phát hiện lỗi của agent trên biểu mẫu tiểu bang.</span></div>
+  </div>
+</section>
+
+<section>
+  <h2><span lang="en">Our rules for agents</span><span lang="vi">Nguyên tắc dành cho agent</span></h2>
+  <ol class="rules">
+    <li><span lang="en"><b>No signing, paying or filing on their own.</b> People do that, and any exception is logged.</span><span lang="vi"><b>Không tự ký, tự thanh toán hay tự nộp hồ sơ.</b> Con người làm việc đó, mọi ngoại lệ đều được ghi lại.</span></li>
+    <li><span lang="en"><b>Money, prices, contracts and upset customers go to a person.</b> Always.</span><span lang="vi"><b>Tiền, giá, hợp đồng và khách hàng không hài lòng luôn chuyển cho con người.</b></span></li>
+    <li><span lang="en"><b>Independent review.</b> Another agent checks the work before it counts as done.</span><span lang="vi"><b>Kiểm tra độc lập.</b> Một agent khác kiểm tra trước khi công việc được coi là hoàn thành.</span></li>
+    <li><span lang="en"><b>Ask, don't guess.</b> Questions go to a person on desktop or phone, and the work waits for the answer.</span><span lang="vi"><b>Hỏi, không đoán.</b> Câu hỏi được gửi đến con người trên máy tính hoặc điện thoại, và công việc chờ câu trả lời.</span></li>
+    <li><span lang="en"><b>Everything leaves a record.</b> That's how we can show you this page.</span><span lang="vi"><b>Mọi việc đều có hồ sơ.</b> Nhờ vậy chúng tôi mới có trang này để chia sẻ.</span></li>
+  </ol>
+</section>
+
+<section class="final">
+  <h2><span lang="en">Want to see it run your work?</span><span lang="vi">Muốn xem AI vận hành công việc của bạn?</span></h2>
+  <p class="sub"><span lang="en">RealTimeX is a small Vietnam–U.S. team that runs like a much bigger one. In 30 minutes Trung will show you the real setup, and where it could take work off your plate.</span><span lang="vi">RealTimeX là một đội ngũ Việt–Mỹ nhỏ nhưng vận hành như một tổ chức lớn hơn nhiều. Trong 30 phút, anh Trung sẽ cho bạn xem hệ thống thực tế, và những việc nó có thể làm thay bạn.</span></p>
+  <a class="cta" href="https://cal.com/trung-realtimex/30min" target="_blank" rel="noopener"><span lang="en">Book 30 minutes with Trung</span><span lang="vi">Đặt lịch 30 phút với anh Trung</span> →</a>
+</section>
+</main>
+
+<footer><div class="wrap">
+  <p><span lang="en">RealTimeX, Inc. · Numbers as of November 14, 2026, counted from our own git history, operations reports and agent logs. Client names are withheld; screenshots are public records or our own filings.</span><span lang="vi">RealTimeX, Inc. · Số liệu tính đến 14/11/2026, lấy từ lịch sử git, báo cáo vận hành và nhật ký agent. Không nêu tên khách hàng; ảnh chụp là hồ sơ công khai hoặc hồ sơ của chính chúng tôi.</span></p>
+</div></footer>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  function setLang(l){
+    root.setAttribute('data-lang',l); root.setAttribute('lang',l);
+    document.querySelectorAll('[data-set-lang]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.setLang===l));});
+    try{localStorage.setItem('lang',l);}catch(e){}
+    drawChart();
+  }
+  var saved=null; try{saved=localStorage.getItem('lang');}catch(e){}
+  var qp=new URLSearchParams(location.search).get('lang');
+  var initial=qp||saved||((navigator.language||'').toLowerCase().indexOf('vi')===0?'vi':'en');
+  document.querySelectorAll('[data-set-lang]').forEach(function(b){b.addEventListener('click',function(){setLang(b.dataset.setLang);});});
+
+  var data=[
+    {m:'2026-02',en:'Feb',vi:'T2',ai:0,t:119},{m:'2026-03',en:'Mar',vi:'T3',ai:12,t:658},
+    {m:'2026-04',en:'Apr',vi:'T4',ai:68,t:894},{m:'2026-05',en:'May',vi:'T5',ai:103,t:1090},
+    {m:'2026-06',en:'Jun',vi:'T6',ai:33,t:1013},{m:'2026-07',en:'Jul',vi:'T7',ai:74,t:1450},
+    {m:'2026-08',en:'Aug',vi:'T8',ai:271,t:1202},{m:'2026-09',en:'Sep',vi:'T9',ai:506,t:1502},
+    {m:'2026-10',en:'Oct',vi:'T10',ai:2701,t:3132},{m:'2026-11',en:'Nov 1–14',vi:'1–14/11',ai:1157,t:1160}
+  ];
+  function pct(d){return Math.round(d.ai/d.t*100);}
+  function fmt(n,l){return n.toLocaleString(l==='vi'?'vi-VN':'en-US');}
+  function drawChart(){
+    var l=root.getAttribute('data-lang')||'en', box=document.getElementById('chart'), tip=document.getElementById('tip');
+    var old=box.querySelector('svg'); if(old) old.remove();
+    var W=Math.max(300,Math.round(box.clientWidth||640)),H=W<480?210:230,pl=34,pr=6,pt=22,pb=28,iw=W-pl-pr,ih=H-pt-pb,n=data.length,slot=iw/n,bw=Math.min(36,slot-8);
+    var ns='http://www.w3.org/2000/svg', svg=document.createElementNS(ns,'svg');
+    svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.setAttribute('role','img');
+    svg.setAttribute('aria-label', l==='vi'?'Tỷ lệ commit có AI đồng tác giả theo tháng, từ 0% tháng 2 lên khoảng 100% tháng 11':'Share of commits with an AI co-author by month, from 0% in February to about 100% in November');
+    function el(t,a,p){var e=document.createElementNS(ns,t);for(var k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e;}
+    [0,50,100].forEach(function(v){var y=pt+ih-ih*v/100;el('line',{x1:pl,x2:W-pr,y1:y,y2:y,class:'grid'});var tx=el('text',{x:pl-6,y:y+4,'text-anchor':'end',class:'axis'});tx.textContent=v+'%';});
+    data.forEach(function(d,i){
+      var p=d.ai/d.t*100, h=Math.max(ih*p/100,2), x=pl+slot*i+(slot-bw)/2, y=pt+ih-h, r=Math.min(4,bw/2,h/2);
+      var g=el('g',{class:'m',tabindex:'0'});
+      var hi=i>=n-2;
+      el('path',{d:'M'+x+','+(pt+ih)+'V'+(y+r)+'q0,-'+r+' '+r+',-'+r+'H'+(x+bw-r)+'q'+r+',0 '+r+','+r+'V'+(pt+ih)+'Z',class:'b'+(hi?' hi':'')},g).setAttribute('style','fill:var('+(hi?'--bar':'--bar-dim')+')');
+      el('rect',{x:pl+slot*i,y:pt,width:slot,height:ih,fill:'transparent'},g);
+      var lb=el('text',{x:x+bw/2,y:pt+ih+18,'text-anchor':'middle',class:'axis'});lb.textContent=(W<480?(d.s||d[l]).replace(/^(\w{3}).*/,'$1'):d[l]);if(W<480&&l==='vi')lb.textContent=d.vi.replace('1–14/11','T11*');if(W<480&&l==='en'&&i===n-1)lb.textContent='Nov*';
+      if(hi||i===n-3){var vt=el('text',{x:x+bw/2,y:y-6,'text-anchor':'middle',class:'val'});vt.textContent=pct(d)+'%';}
+      function show(){var bb=box.getBoundingClientRect(), sc=bb.width/W;
+        tip.innerHTML='<b>'+d[l]+'</b>: '+pct(d)+'%<br>'+fmt(d.ai,l)+(l==='vi'?' / '+fmt(d.t,l)+' commit':' of '+fmt(d.t,l)+' commits');
+        tip.style.left=Math.min(Math.max((x+bw/2)*sc,70),bb.width-70)+'px'; tip.style.top=(y*sc)+'px'; tip.classList.add('on');}
+      function hide(){tip.classList.remove('on');}
+      g.addEventListener('mouseenter',show);g.addEventListener('mouseleave',hide);g.addEventListener('focus',show);g.addEventListener('blur',hide);
+      g.addEventListener('touchstart',show,{passive:true});
+    });
+    box.insertBefore(svg,tip);
+    var tb=document.getElementById('chart-table');
+    tb.innerHTML='<tr><th>'+(l==='vi'?'Tháng':'Month')+'</th><th>'+(l==='vi'?'Có AI':'AI co-authored')+'</th><th>'+(l==='vi'?'Tổng':'Total')+'</th><th>%</th></tr>'+
+      data.map(function(d){return '<tr><td>'+d[l]+'</td><td>'+fmt(d.ai,l)+'</td><td>'+fmt(d.t,l)+'</td><td>'+pct(d)+'%</td></tr>';}).join('');
+  }
+  setLang(initial==='vi'?'vi':'en');
+  var rt; window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(drawChart,150);});
+})();
+</script>
+</body>
+</html>

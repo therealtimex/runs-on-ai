@@ -180,6 +180,10 @@ html.deck .slide.on .clock .ring{stroke-dashoffset:0}
 .rules b{display:block;font-size:25px;margin:10px 0 6px;line-height:1.2}
 .rules p{margin:0;color:var(--t2);font-size:19px;line-height:1.4}
 
+.vidwrap{margin-top:24px;border-radius:20px;overflow:hidden;border:1px solid var(--b-def);box-shadow:0 26px 80px rgba(0,0,0,.5);background:#000;align-self:center;flex:none;width:1170px;height:658px}
+.vidwrap video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+html.deck .vid-slide .inner{padding-top:60px}
+html:not(.deck) .vidwrap{width:100%;height:auto;aspect-ratio:16/9}
 /* ===== Flow mode (phones / ?mode=page) ===== */
 html:not(.deck) .slide{border-bottom:1px solid var(--b-sub)}
 html:not(.deck) .inner{padding:56px 18px 48px;max-width:760px;margin:0 auto}
@@ -426,6 +430,18 @@ html.deck .hide-deck{display:none}
   <p class="footnote"><span lang="en">Agents make mistakes: outages, a late quote, a lost auction, a wrong form field. The system is built to catch them, in both directions.</span><span lang="vi">Agent cũng mắc lỗi: gián đoạn, báo giá trễ, lỡ đấu giá, nhập sai ô. Hệ thống được xây để phát hiện lỗi, từ cả hai phía.</span></p>
 </div></section>
 
+<!-- 11b VIDEO -->
+<section class="slide vid-slide"><div class="inner">
+  <p class="eyebrow cyan rv"><span lang="en">Watch it run · real footage, no actors</span><span lang="vi">Xem hệ thống chạy · cảnh quay thật, không diễn</span></p>
+  <h2 class="rv d1" style="font-size:60px"><span lang="en">One real mission. <span class="sig">60 seconds.</span></span><span lang="vi">Một nhiệm vụ thật. <span class="sig">60 giây.</span></span></h2>
+  <div class="vidwrap rv d2">
+    <video id="mission" muted playsinline preload="metadata" controls poster="video/live-mission-en.webp" data-src-en="video/live-mission-en.mp4" data-src-vi="video/live-mission-vi.mp4" data-poster-en="video/live-mission-en.webp" data-poster-vi="video/live-mission-vi.webp">
+      <source src="video/live-mission-en.mp4" type="video/mp4">
+    </video>
+  </div>
+  <p class="footnote"><span lang="en">Recorded Nov 14, 2026 in a demo workspace: 3 agents checked the name "PhoForward" on public USPTO records; a person approved the result. Sped up.</span><span lang="vi">Quay ngày 14/11/2026 trong một workspace demo: 3 agent kiểm tra tên "PhoForward" trên dữ liệu USPTO công khai; con người duyệt kết quả. Đã tua nhanh.</span></p>
+</div></section>
+
 <!-- 12 PRODUCT -->
 <section class="slide prod"><div class="inner">
   <p class="eyebrow rv"><span lang="en">Local-first agent control plane</span><span lang="vi">Nền tảng điều phối agent ngay trên máy của bạn</span></p>
@@ -457,7 +473,7 @@ html.deck .hide-deck{display:none}
 
 </main>
 
-<div id="navbar" class="chrome"><button type="button" id="prev" aria-label="Previous slide">←</button><span id="pos">1 / 13</span><button type="button" id="next" aria-label="Next slide">→</button></div>
+<div id="navbar" class="chrome"><button type="button" id="prev" aria-label="Previous slide">←</button><span id="pos">1 / 14</span><button type="button" id="next" aria-label="Next slide">→</button></div>
 <div id="progress"></div>
 
 <script>
@@ -471,7 +487,7 @@ html.deck .hide-deck{display:none}
   function setLang(l){root.dataset.lang=l;root.lang=l;
     document.querySelectorAll('[data-set-lang]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.setLang===l));});
     document.querySelectorAll('[data-count]').forEach(function(el){el.textContent=fmt(+el.dataset.count);});
-    setS('lang',l);drawChart();}
+    setS('lang',l);drawChart();if(typeof vidLang==='function')vidLang();}
   document.querySelectorAll('[data-set-lang]').forEach(function(b){b.addEventListener('click',function(){setLang(b.dataset.setLang);});});
   function wantDeck(){if(q.get('mode')==='page')return false;if(q.get('mode')==='deck')return true;return innerWidth>=900&&innerWidth/innerHeight>1.15;}
   function fit(){var deck=wantDeck();root.classList.toggle('deck',deck);
@@ -482,7 +498,7 @@ html.deck .hide-deck{display:none}
     document.getElementById('pos').textContent=(i+1)+' / '+slides.length;
     document.getElementById('progress').style.width=((i+1)/slides.length*100)+'%';
     if(!silent)history.replaceState(null,'','#'+(i+1));
-    countUp(slides[i]);}
+    countUp(slides[i]);if(typeof vidSync==='function')vidSync();}
   function isDeck(){return root.classList.contains('deck');}
   function step(d){if(isDeck())show(i+d);}
   document.getElementById('prev').onclick=function(){step(-1);};
@@ -504,6 +520,12 @@ html.deck .hide-deck{display:none}
     var t0=null;el.textContent='0';
     function f(t){t0=t0||t;var p=Math.min(1,(t-t0)/1400),e=1-Math.pow(1-p,3);el.textContent=fmt(Math.round(to*e));if(p<1)requestAnimationFrame(f);}
     setTimeout(function(){requestAnimationFrame(f);},350);});}
+  /* mission video: language source + play only on its slide in deck mode */
+  var vid=document.getElementById('mission');
+  function vidLang(){if(!vid)return;var l=root.dataset.lang||'en';var src=vid.dataset['src'+(l==='vi'?'Vi':'En')];
+    if(vid.getAttribute('data-cur')!==src){vid.setAttribute('data-cur',src);vid.poster=vid.dataset['poster'+(l==='vi'?'Vi':'En')];vid.querySelector('source').src=src;vid.load();}}
+  function vidSync(){if(!vid)return;var on=root.classList.contains('deck')&&vid.closest('.slide').classList.contains('on');
+    if(on){vid.currentTime=0;var p=vid.play();if(p&&p.catch)p.catch(function(){});}else if(root.classList.contains('deck')){vid.pause();}}
   var data=[['Feb','T2',0,119],['Mar','T3',12,658],['Apr','T4',68,894],['May','T5',103,1090],['Jun','T6',33,1013],['Jul','T7',74,1450],['Aug','T8',271,1202],['Sep','T9',506,1502],['Oct','T10',2701,3132],['Nov*','T11*',1157,1160]];
   function drawChart(){var box=document.getElementById('chart');if(!box)return;var vi=root.dataset.lang==='vi';
     var W=720,H=420,pl=46,pb=34,pt=34,iw=W-pl-8,ih=H-pt-pb,n=data.length,sl=iw/n,bw=sl*.62,s='';
